@@ -1,0 +1,19 @@
+{
+  "name": "controldedeudas",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-rebuild": "^3.2.9",
+    "sqlite3": "^5.1.7"
+  }
+}

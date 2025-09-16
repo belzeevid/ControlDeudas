@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Control de Deudas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <style>
+    html { background: transparent; }
+    body { background-color: rgba(46, 52, 64, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); color: #ECEFF4; margin: 0; font-family: 'Poppins', sans-serif; border-radius: 12px; overflow: hidden; height: 100vh; }
+    .title-bar { -webkit-app-region: drag; height: 32px; background-color: rgba(59, 66, 82, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+    .title-bar-controls { display: flex; }
+    .title-bar-button, .title-bar-nav-button { -webkit-app-region: no-drag; border: none; background-color: transparent; transition: background-color 0.2s; color: #ECEFF4; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; }
+    .title-bar-button { width: 28px; height: 28px; border-radius: 50%; margin: 0 4px; cursor: pointer; }
+    .title-bar-nav-button { padding: 0 10px; height: 28px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; }
+    .title-bar-button:hover, .title-bar-nav-button:hover { background-color: rgba(255,255,255,0.1); }
+    .title-bar-button .icon { font-size: 18px !important; color: #ECEFF4; }
+    .MuiTypography-root { color: #ECEFF4; font-family: 'Poppins', sans-serif !important; }
+    .MuiInputLabel-root { color: #D8DEE9; }
+    .MuiInputBase-input { color: #ECEFF4; }
+    .MuiInput-underline:before { border-bottom-color: #4C566A; }
+    .user-selection-container { min-height: calc(100vh - 32px); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .user-card-grid { display: flex; gap: 24px; margin-bottom: 30px; align-items: flex-start;}
+    .user-card-wrapper { text-align: center; }
+    .user-card { background-color: rgba(59, 66, 82, 0.8); border: 1px solid #4C566A; padding: 20px; border-radius: 8px; cursor: pointer; }
+    .user-card:hover { transform: translateY(-5px); border-color: #88C0D0; }
+    .user-card-actions { display: flex; justify-content: center; margin-top: 15px; }
+    .delete-button { background: none; border: none; cursor: pointer; padding: 5px; border-radius: 50%; display:flex; transition: background-color 0.2s; }
+    .delete-button:hover { background-color: rgba(191, 97, 106, 0.3); } /* Nord Red, semi-transparent */
+    .delete-button .icon { color: #D8DEE9; font-size: 20px !important; transition: color 0.2s; }
+    .delete-button:hover .icon { color: #BF616A; } /* Nord Red */
+    .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; padding-top: 20px; }
+    .app-card { background-color: rgba(59, 66, 82, 0.8); border: 1px solid #4C566A; padding: 16px; text-align: center; cursor: pointer; border-radius: 8px; }
+    .app-card.selected { background-color: #434C5E; border-color: #5E81AC; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@mui/material@5.15.14/umd/material-ui.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script type="text/babel">
+    const { TextField, Button, Container, Typography, Icon } = MaterialUI;
+    const { useState, useEffect } = React;
+
+    // --- Componente 1: Barra de Título ---
+    function TitleBar({ currentView, onGoToUsers }) {
+      return (
+        <div className="title-bar">
+            <div>
+                {['appSelection'].includes(currentView) && (
+                    <button className="title-bar-nav-button" onClick={onGoToUsers}>USUARIOS</button>
+                )}
+            </div>
+            <div className="title-bar-controls">
+                <button className="title-bar-button" onClick={() => window.electronAPI.minimize()}><Icon className="icon">remove</Icon></button>
+                <button className="title-bar-button" onClick={() => window.electronAPI.maximize()}><Icon className="icon">check_box_outline_blank</Icon></button>
+                <button className="title-bar-button" onClick={() => window.electronAPI.close()}><Icon className="icon">close</Icon></button>
+            </div>
+        </div>
+      );
+    }
+
+    // --- Componente 2: Pantalla de Selección de Usuario ---
+    function UserSelectionScreen({ users, onSelectUser, onDelete, onRegisterNew }) {
+      return (
+        <div className="user-selection-container">
+            <Typography variant="h4" component="h1" gutterBottom>¿Quién está usando la app?</Typography>
+            <div className="user-card-grid">
+                {users.map(user => (
+                    <div key={user.id} className="user-card-wrapper">
+                        <div className="user-card" onClick={() => onSelectUser(user)}>
+                            <Icon style={{fontSize: '60px'}}>account_circle</Icon>
+                            <Typography variant="h6">{user.name}</Typography>
+                        </div>
+                        <div className="user-card-actions">
+                            <button className="delete-button" onClick={(e) => { e.stopPropagation(); onDelete(user.id); }}>
+                                <Icon className="icon">delete</Icon>
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {users.length < 3 && <Button variant="contained" color="secondary" onClick={onRegisterNew}>Registrar Nuevo Usuario</Button>}
+        </div>
+      );
+    }
+
+    // --- Componente 3: Pantalla de Registro ---
+    function RegisterScreen({ onRegister }) {
+      const [name, setName] = useState('');
+      const [email, setEmail] = useState('');
+      const [income, setIncome] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!name || !email || !income) return;
+        onRegister({ name, email, income: parseFloat(income) });
+      };
+
+      return (
+        <Container maxWidth="sm">
+          <Typography variant="h4" component="h1" gutterBottom style={{ paddingTop: '20px' }}>Registro de Usuario</Typography>
+          <form onSubmit={handleSubmit}>
+            <TextField label="Nombre" fullWidth required margin="normal" variant="standard" value={name} onChange={e => setName(e.target.value)} />
+            <TextField label="Correo Electrónico" fullWidth required margin="normal" variant="standard" value={email} onChange={e => setEmail(e.target.value)} />
+            <TextField label="Monto de Ganancia Mensual" type="number" fullWidth required margin="normal" variant="standard" value={income} onChange={e => setIncome(e.target.value)} />
+            <Button type="submit" variant="contained" color="primary" style={{ marginTop: '20px' }}>Registrar</Button>
+          </form>
+        </Container>
+      );
+    }
+
+    // --- Componente 4: Pantalla de Selección de Apps ---
+    function AppSelectionScreen() {
+      const loanApps = [ { id: 'kueski', name: 'Kueski', icon: 'account_balance_wallet' }, { id: 'didiapp', name: 'DiDi App', icon: 'directions_car' }, { id: 'tala', name: 'Tala', icon: 'monetization_on' }, { id: 'moneyman', name: 'MoneyMan', icon: 'speed' }, { id: 'yotepresto', name: 'YoTePresto', icon: 'group' }, { id: 'lendon', name: 'Lendon.mx', icon: 'local_atm' }, { id: 'baubap', name: 'Baubap', icon: 'star' }, { id: 'creditea', name: 'Creditea', icon: 'credit_card' }, { id: 'kubofin', name: 'Kubo.financiero', icon: 'business' }, { id: 'askrobin', name: 'AskRobin', icon: 'question_answer' }, { id: 'finsus', name: 'Finsus', icon: 'trending_up' }, { id: 'klar', name: 'Klar', icon: 'shield' }, ];
+      const [selectedApps, setSelectedApps] = useState([]);
+      const handleCardClick = (appId) => { setSelectedApps(prev => { const isSelected = prev.includes(appId); if (isSelected) return prev.filter(id => id !== appId); return prev.length < 10 ? [...prev, appId] : prev; }); };
+      return (
+        <Container maxWidth="md">
+          <Typography variant="h4" component="h1" gutterBottom align="center" style={{ paddingTop: '20px' }}>Selecciona tus Apps de Préstamos</Typography>
+          <Typography variant="body1" align="center" gutterBottom>Seleccionadas: {selectedApps.length} de 10</Typography>
+          <div className="app-grid">{loanApps.map(app => ( <div key={app.id} className={`app-card ${selectedApps.includes(app.id) ? 'selected' : ''}`} onClick={() => handleCardClick(app.id)}> <Icon style={{fontSize: '48px'}}>{app.icon}</Icon> <Typography variant="caption">{app.name}</Typography> </div> ))}</div>
+          {selectedApps.length > 0 && ( <div style={{textAlign: 'center', marginTop: '30px'}}> <Button variant="contained" color="primary">Continuar</Button> </div> )}
+        </Container>
+      );
+    }
+
+    // --- Componente Principal y Orquestador ---
+    function App() {
+      const [view, setView] = useState('loading');
+      const [users, setUsers] = useState([]);
+      const [selectedUser, setSelectedUser] = useState(null);
+
+      const refreshUsersAndSetView = () => {
+        window.electronAPI.getUsers().then(fetchedUsers => {
+          setUsers(fetchedUsers);
+          setView(fetchedUsers.length === 0 ? 'register' : 'userSelection');
+        }).catch(err => console.error("Error al cargar usuarios:", err));
+      };
+
+      useEffect(() => {
+        refreshUsersAndSetView();
+      }, []);
+
+      const handleRegister = async (newUser) => {
+        try {
+            await window.electronAPI.addUser(newUser);
+            refreshUsersAndSetView();
+        } catch (error) { console.error('Error al registrar usuario:', error); }
+      };
+
+      const handleDeleteUser = async (userId) => {
+        if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+            try {
+                await window.electronAPI.deleteUser(userId);
+                refreshUsersAndSetView(); // Recargar usuarios y actualizar la vista
+            } catch (error) { console.error('Error al eliminar usuario:', error); }
+        }
+      };
+
+      const handleGoToUserSelection = () => {
+        setSelectedUser(null);
+        setView('userSelection');
+      };
+
+      const handleSelectUser = (user) => {
+        setSelectedUser(user);
+        setView('appSelection');
+      }
+
+      let content;
+      switch (view) {
+        case 'loading':
+          content = <Typography variant="h5" align="center" style={{paddingTop: '40vh'}}>Cargando...</Typography>;
+          break;
+        case 'userSelection':
+          content = <UserSelectionScreen users={users} onSelectUser={handleSelectUser} onDelete={handleDeleteUser} onRegisterNew={() => setView('register')} />;
+          break;
+        case 'register':
+          content = <RegisterScreen onRegister={handleRegister} />;
+          break;
+        case 'appSelection':
+          content = <AppSelectionScreen />;
+          break;
+        default:
+          content = <Typography variant="h5" align="center" style={{paddingTop: '40vh'}}>Error: Vista desconocida</Typography>;
+      }
+
+      return (
+        <div>
+          <TitleBar currentView={view} onGoToUsers={handleGoToUserSelection} />
+          <div className="main-content">{content}</div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
